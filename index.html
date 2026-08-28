@@ -1,0 +1,245 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#f5f2eb" />
+    <title>堆堆堆 PilePilePile</title>
+    <link rel="stylesheet" href="./styles.css?v=20260828-08" />
+  </head>
+  <body>
+    <header class="topbar">
+      <a class="brand" href="#" aria-label="堆堆堆首页">
+        <span class="brand-mark" aria-label="P 三次方"><span class="brand-letter">P</span><sup>3</sup></span>
+        <span><strong>堆堆堆</strong><small>PilePilePile</small></span>
+      </a>
+      <div class="top-actions">
+        <button class="button ghost" id="exportPngButton">导出 PNG</button>
+        <button class="button ghost" id="exportSvgButton">导出 SVG</button>
+        <button class="button primary" id="copySvgButton">复制 SVG</button>
+      </div>
+    </header>
+
+    <main class="workspace">
+      <aside class="panel left-panel">
+        <section>
+          <div class="section-heading">
+            <div><span class="step">01</span><h2>输入文字</h2></div>
+            <span id="wordCount" class="counter">0 个</span>
+          </div>
+          <textarea id="wordsInput" rows="8" spellcheck="false" aria-label="词语输入"></textarea>
+          <p class="hint">支持空格、换行、顿号、逗号和分号分隔</p>
+        </section>
+
+        <section>
+          <div class="section-heading"><div><span class="step">02</span><h2>字号档位</h2></div></div>
+          <label class="font-setting">
+            <span>文字字体</span>
+            <select id="fontFamily" aria-label="文字字体">
+              <optgroup label="中文字体">
+                <option value="pingfang">苹方 · 无衬线</option>
+                <option value="songti">华文宋体 · 衬线</option>
+              </optgroup>
+              <optgroup label="英文字体">
+                <option value="helvetica">Helvetica Neue · 无衬线</option>
+                <option value="georgia">Georgia · 衬线</option>
+              </optgroup>
+            </select>
+          </label>
+          <div class="setting-line">
+            <span>字号分布</span>
+            <div class="inline-segment" id="sizeModeControl">
+              <button class="active" data-size-mode="hierarchy">层级鲜明</button>
+              <button data-size-mode="similar">大小相近</button>
+            </div>
+          </div>
+          <div class="field-grid three">
+            <label>最小字号<input id="minFontSize" type="number" min="8" max="260" value="20" disabled /></label>
+            <label>档位数<input id="fontLevelCount" type="number" min="2" max="10" value="5" /></label>
+            <label>档位跨度<input id="fontLevelGap" type="number" min="2" max="80" value="18" disabled /></label>
+          </div>
+          <div id="fontLevelPreview" class="level-preview"></div>
+          <label class="check-row"><input id="autoFontFit" type="checkbox" checked /><span>自动适配字号填满形状</span></label>
+          <label class="range-label">
+            <span>文字间距 <output id="paddingOutput">2 px</output></span>
+            <input id="wordPadding" type="range" min="0" max="20" value="2" />
+          </label>
+          <label class="range-label">
+            <span>填充强度 <output id="fillStrengthOutput">74%</output></span>
+            <input id="fillStrength" type="range" min="50" max="90" value="74" />
+          </label>
+          <div class="setting-line rotation-setting">
+            <span>文字角度</span>
+            <div class="inline-segment three" id="rotationModeControl">
+              <button class="active" data-rotation-mode="none">不旋转</button>
+              <button data-rotation-mode="random">随机</button>
+              <button data-rotation-mode="custom">自定义</button>
+            </div>
+          </div>
+          <div id="rotationAngleOptions" class="angle-grid" hidden>
+            <label><input type="checkbox" data-angle="0" checked /><span>水平</span></label>
+            <label><input type="checkbox" data-angle="90" checked /><span>垂直</span></label>
+            <label><input type="checkbox" data-angle="45" /><span>倾斜 45°</span></label>
+            <label><input type="checkbox" data-angle="-45" /><span>倾斜 −45°</span></label>
+            <label><input type="checkbox" data-angle="35" /><span>倾斜 35°</span></label>
+            <label><input type="checkbox" data-angle="-35" /><span>倾斜 −35°</span></label>
+            <label><input type="checkbox" data-angle="15" /><span>倾斜 15°</span></label>
+            <label><input type="checkbox" data-angle="-15" /><span>倾斜 −15°</span></label>
+            <label><input type="checkbox" data-angle="5" /><span>倾斜 5°</span></label>
+            <label><input type="checkbox" data-angle="-5" /><span>倾斜 −5°</span></label>
+          </div>
+        </section>
+
+        <section>
+          <div class="section-heading"><div><span class="step">03</span><h2>填充数量</h2></div></div>
+          <div class="setting-line density-setting">
+            <span>目标文字数</span>
+            <div class="number-stepper">
+              <button id="densityMinusButton" disabled aria-label="减少目标文字数">−</button>
+              <input id="densityNumber" type="number" min="1" max="320" value="30" disabled aria-label="目标文字数" />
+              <button id="densityPlusButton" disabled aria-label="增加目标文字数">＋</button>
+            </div>
+          </div>
+          <label class="range-label compact-range">
+            <input id="density" type="range" min="1" max="320" step="1" value="30" disabled />
+          </label>
+          <label class="check-row"><input id="repeatWords" type="checkbox" /><span>词语不足时循环填充</span></label>
+          <label class="check-row"><input id="compactLayout" type="checkbox" checked /><span>自动紧凑填满形状</span></label>
+        </section>
+      </aside>
+
+      <section class="stage-shell">
+        <div class="stage-toolbar">
+          <div>
+            <strong>画布</strong>
+            <span>1080 × 1080 px</span>
+          </div>
+          <div class="zoom-note">预览已自适应缩放</div>
+        </div>
+        <div class="canvas-wrap" id="canvasWrap">
+          <canvas id="wordCanvas" width="1080" height="1080"></canvas>
+          <div id="emptyState" class="empty-state" hidden>
+            <strong>还没有可用文字</strong>
+            <span>在左侧输入词语后重新生成</span>
+          </div>
+        </div>
+        <section id="wordDetailsPanel" class="word-details-panel" aria-label="词条详情" hidden>
+          <div class="word-details-heading">
+            <div><strong>词条详情</strong><span id="wordDetailsSummary"></span></div>
+            <span>修改后立即应用</span>
+          </div>
+          <div id="wordDetailsHeader" class="word-details-grid word-details-header">
+            <span>词条</span><span>字号档位</span><span>颜色</span><span class="word-count-column">数量</span>
+          </div>
+          <div id="wordDetailsList" class="word-details-list"></div>
+        </section>
+        <div class="stage-footer">
+          <button id="wordDetailsToggle" class="button randomize word-details-toggle" type="button" aria-expanded="false" aria-controls="wordDetailsPanel">
+            <span id="wordDetailsToggleLabel">查看词条详情 · 0</span>
+            <svg class="sf-symbol toggle-chevron toggle-chevron-down" viewBox="0 0 18 18" aria-hidden="true"><path d="m4.5 6.75 4.5 4.5 4.5-4.5" /></svg>
+            <svg class="sf-symbol toggle-chevron toggle-chevron-up" viewBox="0 0 18 18" aria-hidden="true"><path d="m4.5 11.25 4.5-4.5 4.5 4.5" /></svg>
+          </button>
+          <div class="layout-actions">
+            <div class="history-actions" role="group" aria-label="编辑历史">
+              <button class="history-button" id="undoButton" type="button" title="撤销（Command + Z）" disabled>
+                <span>撤销</span><svg class="sf-symbol" viewBox="0 0 18 18" aria-hidden="true"><path d="M7.1 4.1 3.5 7.35l3.6 3.25M4 7.35h6.1c2.75 0 4.4 1.52 4.4 4.15 0 1.03-.28 1.9-.83 2.62" /></svg>
+              </button>
+              <button class="history-button" id="redoButton" type="button" title="重做（Command + Shift + Z）" disabled>
+                <span>重做</span><svg class="sf-symbol" viewBox="0 0 18 18" aria-hidden="true"><path d="m10.9 4.1 3.6 3.25-3.6 3.25M14 7.35H7.9c-2.75 0-4.4 1.52-4.4 4.15 0 1.03.28 1.9.83 2.62" /></svg>
+              </button>
+            </div>
+            <span class="top-action-divider" aria-hidden="true"></span>
+            <button class="button randomize" id="randomSettingsButton"><span>✦</span> 随机字号</button>
+            <button class="button regenerate" id="regenerateButton"><span>↻</span> 重新排版</button>
+          </div>
+        </div>
+      </section>
+
+      <aside class="panel right-panel">
+        <section>
+          <div class="section-heading"><div><span class="step">04</span><h2>形状</h2></div></div>
+          <div class="shape-grid" id="shapeGrid">
+            <button class="shape-card active" data-shape="square" aria-label="正方形" title="正方形"><span class="shape square" aria-hidden="true"></span></button>
+            <button class="shape-card" data-shape="rectangle" aria-label="长方形" title="长方形"><span class="shape rectangle" aria-hidden="true"></span></button>
+            <button class="shape-card" data-shape="circle" aria-label="圆形" title="圆形"><span class="shape circle" aria-hidden="true"></span></button>
+            <button class="shape-card" data-shape="star" aria-label="星形" title="星形"><span class="shape star" aria-hidden="true">★</span></button>
+            <button class="shape-card" data-shape="heart" aria-label="心形" title="心形"><span class="shape heart" aria-hidden="true">♥</span></button>
+            <button class="shape-card" data-shape="cloud" aria-label="云朵" title="云朵"><span class="shape cloud" aria-hidden="true">☁</span></button>
+            <button class="shape-card preset-svg-shape" data-saved-shape="builtin-weibo" aria-label="微博" title="微博"><img class="saved-shape-thumb" src="./assets/weibo.svg" alt="" /></button>
+            <label class="shape-card add-shape-card" aria-label="添加 SVG" title="添加 SVG"><span class="shape add-shape" aria-hidden="true">＋</span><input id="svgShapeUpload" type="file" accept=".svg,image/svg+xml" /></label>
+          </div>
+          <div class="custom-actions">
+            <button id="drawShapeButton" class="button small">节点绘图</button>
+            <label class="button small file-button">上传图片<input id="imageUpload" type="file" accept="image/png,image/jpeg,image/webp" /></label>
+          </div>
+          <div id="drawingHelp" class="drawing-help" hidden>
+            <p>单击画布添加节点，完成后闭合形状</p>
+            <div>
+              <button id="undoPolygonButton" class="button mini">撤销</button>
+              <button id="resetPolygonButton" class="button mini">重绘</button>
+              <button id="closePolygonButton" class="button mini primary">完成闭合</button>
+            </div>
+          </div>
+          <label id="invertRow" class="check-row" hidden><input id="invertMask" type="checkbox" /><span>反转图片明暗区域</span></label>
+          <div class="shape-layer-settings">
+            <label class="check-row"><input id="showShapeLayer" type="checkbox" checked /><span>显示形状背景层</span></label>
+            <div class="setting-line layer-color-line">
+              <span>图层颜色</span>
+              <div class="color-value-input compact-color-input combined-color-input">
+                <input id="shapeLayerColor" type="color" value="#FFE8D6" aria-label="选择形状层颜色" />
+                <input id="shapeLayerColorText" type="text" value="#FFE8D6" maxlength="7" aria-label="形状层色值" />
+                <label class="inline-opacity-input" aria-label="图层透明度">
+                  <input id="shapeLayerOpacity" type="number" min="0" max="100" step="1" value="18" inputmode="numeric" />
+                  <span>%</span>
+                </label>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section>
+          <div class="section-heading"><div><span class="step">05</span><h2>配色</h2></div></div>
+          <div class="mode-switch" role="group" aria-label="配色模式">
+            <button id="presetModeButton" class="active">预置配色</button>
+            <button id="customModeButton">自定颜色</button>
+          </div>
+          <div class="palette-list" id="paletteList"></div>
+          <div id="customPaletteEditor" class="custom-palette-editor" hidden>
+            <div id="customColors"></div>
+            <button id="addColorButton" class="button add-color-button">＋ 添加颜色</button>
+          </div>
+        </section>
+
+        <section>
+          <div class="section-heading"><div><span class="step">06</span><h2>背景</h2></div></div>
+          <div class="background-row color-value-input combined-color-input">
+            <input id="backgroundColor" type="color" value="#F8F6F0" aria-label="选择背景色" />
+            <input id="backgroundColorText" type="text" value="#F8F6F0" maxlength="7" aria-label="背景色值" />
+            <label class="inline-opacity-input" aria-label="背景透明度">
+              <input id="backgroundOpacity" type="number" min="0" max="100" step="1" value="100" inputmode="numeric" />
+              <span>%</span>
+            </label>
+          </div>
+          <label class="check-row transparent-row"><input id="transparentBackground" type="checkbox" /><span>透明背景</span></label>
+        </section>
+      </aside>
+    </main>
+
+    <div id="wordContextMenu" class="word-context-menu" role="dialog" aria-label="词条设置" hidden>
+      <div class="word-context-heading">
+        <div><span>词条设置</span><strong id="contextWordLabel"></strong></div>
+        <button id="closeWordContextButton" type="button" aria-label="关闭词条设置" title="关闭">×</button>
+      </div>
+      <label><span>字号档位</span><select id="contextWordSize" aria-label="词条字号档位"></select></label>
+      <label><span>词条颜色</span><select id="contextWordColor" aria-label="词条颜色"></select></label>
+      <div class="word-context-actions">
+        <button id="resetWordStyleButton" type="button">恢复默认</button>
+        <button id="saveWordStyleButton" type="button">保存</button>
+      </div>
+    </div>
+
+    <span id="layoutStatus" class="visually-hidden" aria-live="polite">正在生成…</span>
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+    <script src="./app.js?v=20260828-08"></script>
+  </body>
+</html>
