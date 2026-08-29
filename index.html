@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#f5f2eb" />
     <title>堆堆堆 PilePilePile</title>
-    <link rel="stylesheet" href="./styles.css?v=20260828-08" />
+    <link rel="stylesheet" href="./styles.css?v=20260829-13" />
   </head>
   <body>
     <header class="topbar">
@@ -116,23 +116,25 @@
           </div>
           <div class="zoom-note">预览已自适应缩放</div>
         </div>
-        <div class="canvas-wrap" id="canvasWrap">
-          <canvas id="wordCanvas" width="1080" height="1080"></canvas>
-          <div id="emptyState" class="empty-state" hidden>
-            <strong>还没有可用文字</strong>
-            <span>在左侧输入词语后重新生成</span>
+        <div id="stageContent" class="stage-content">
+          <div class="canvas-wrap" id="canvasWrap">
+            <canvas id="wordCanvas" width="1080" height="1080"></canvas>
+            <div id="emptyState" class="empty-state" hidden>
+              <strong>还没有可用文字</strong>
+              <span>在左侧输入词语后重新生成</span>
+            </div>
           </div>
+          <section id="wordDetailsPanel" class="word-details-panel" aria-label="词条详情" hidden>
+            <div class="word-details-heading">
+              <div><strong>词条详情</strong><span id="wordDetailsSummary"></span></div>
+              <span>修改后立即应用</span>
+            </div>
+            <div id="wordDetailsHeader" class="word-details-grid word-details-header">
+              <span>词条</span><span>字号档位</span><span>颜色</span><span class="word-count-column">数量</span>
+            </div>
+            <div id="wordDetailsList" class="word-details-list"></div>
+          </section>
         </div>
-        <section id="wordDetailsPanel" class="word-details-panel" aria-label="词条详情" hidden>
-          <div class="word-details-heading">
-            <div><strong>词条详情</strong><span id="wordDetailsSummary"></span></div>
-            <span>修改后立即应用</span>
-          </div>
-          <div id="wordDetailsHeader" class="word-details-grid word-details-header">
-            <span>词条</span><span>字号档位</span><span>颜色</span><span class="word-count-column">数量</span>
-          </div>
-          <div id="wordDetailsList" class="word-details-list"></div>
-        </section>
         <div class="stage-footer">
           <button id="wordDetailsToggle" class="button randomize word-details-toggle" type="button" aria-expanded="false" aria-controls="wordDetailsPanel">
             <span id="wordDetailsToggleLabel">查看词条详情 · 0</span>
@@ -165,7 +167,13 @@
             <button class="shape-card" data-shape="star" aria-label="星形" title="星形"><span class="shape star" aria-hidden="true">★</span></button>
             <button class="shape-card" data-shape="heart" aria-label="心形" title="心形"><span class="shape heart" aria-hidden="true">♥</span></button>
             <button class="shape-card" data-shape="cloud" aria-label="云朵" title="云朵"><span class="shape cloud" aria-hidden="true">☁</span></button>
-            <button class="shape-card preset-svg-shape" data-saved-shape="builtin-weibo" aria-label="微博" title="微博"><img class="saved-shape-thumb" src="./assets/weibo.svg" alt="" /></button>
+            <button class="shape-card preset-svg-shape" data-saved-shape="builtin-weibo" aria-label="微博" title="微博">
+              <span class="shape weibo" aria-hidden="true">
+                <svg viewBox="0 0 280 226" focusable="false">
+                  <path fill-rule="evenodd" clip-rule="evenodd" d="M235.669 48.7713C241.229 56.7648 240.682 67.9721 235.571 80.9636C233.198 86.971 236.314 87.8767 240.814 89.2517C259.216 95.0027 279.674 108.933 279.674 133.426C279.674 174.005 221.673 225.108 134.485 225.108C67.9721 225.108 0 192.589 0 139.106C0 111.159 17.5602 78.8138 47.7932 43.3969C88.173 7.57621 135.266 -10.9752 152.969 6.88326C160.776 14.7731 161.552 28.4139 156.528 44.69C153.909 52.8909 164.138 48.3785 164.138 48.3785C196.776 34.5795 225.254 33.7556 235.669 48.7713Z" />
+                </svg>
+              </span>
+            </button>
             <label class="shape-card add-shape-card" aria-label="添加 SVG" title="添加 SVG"><span class="shape add-shape" aria-hidden="true">＋</span><input id="svgShapeUpload" type="file" accept=".svg,image/svg+xml" /></label>
           </div>
           <div class="custom-actions">
@@ -173,11 +181,10 @@
             <label class="button small file-button">上传图片<input id="imageUpload" type="file" accept="image/png,image/jpeg,image/webp" /></label>
           </div>
           <div id="drawingHelp" class="drawing-help" hidden>
-            <p>单击画布添加节点，完成后闭合形状</p>
+            <p>单击画布添加节点，至少添加 3 个节点</p>
             <div>
-              <button id="undoPolygonButton" class="button mini">撤销</button>
-              <button id="resetPolygonButton" class="button mini">重绘</button>
-              <button id="closePolygonButton" class="button mini primary">完成闭合</button>
+              <button id="cancelPolygonButton" class="button mini">取消</button>
+              <button id="finishPolygonButton" class="button mini primary">完成绘图</button>
             </div>
           </div>
           <label id="invertRow" class="check-row" hidden><input id="invertMask" type="checkbox" /><span>反转图片明暗区域</span></label>
@@ -240,6 +247,6 @@
 
     <span id="layoutStatus" class="visually-hidden" aria-live="polite">正在生成…</span>
     <div id="toast" class="toast" role="status" aria-live="polite"></div>
-    <script src="./app.js?v=20260828-08"></script>
+    <script src="./app.js?v=20260829-08"></script>
   </body>
 </html>

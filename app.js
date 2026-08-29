@@ -7,8 +7,8 @@ const elements = Object.fromEntries([
   'fontLevelPreview', 'autoFontFit', 'wordPadding', 'paddingOutput', 'fillStrength', 'fillStrengthOutput',
   'rotationModeControl', 'rotationAngleOptions', 'density', 'densityNumber', 'densityMinusButton',
   'densityPlusButton', 'repeatWords', 'compactLayout', 'sizeModeControl', 'shapeGrid',
-  'drawShapeButton', 'drawingHelp', 'undoPolygonButton', 'resetPolygonButton',
-  'closePolygonButton', 'imageUpload', 'svgShapeUpload', 'invertRow', 'invertMask',
+  'drawShapeButton', 'drawingHelp', 'cancelPolygonButton', 'finishPolygonButton',
+  'imageUpload', 'svgShapeUpload', 'invertRow', 'invertMask',
   'showShapeLayer', 'shapeLayerColor', 'shapeLayerColorText', 'shapeLayerOpacity',
   'paletteList', 'presetModeButton', 'customModeButton', 'customPaletteEditor',
   'customColors', 'addColorButton',
@@ -18,17 +18,31 @@ const elements = Object.fromEntries([
   'wordContextMenu', 'contextWordLabel', 'contextWordSize', 'contextWordColor',
   'resetWordStyleButton', 'saveWordStyleButton', 'closeWordContextButton',
   'wordDetailsToggle', 'wordDetailsToggleLabel', 'wordDetailsPanel', 'wordDetailsSummary', 'wordDetailsHeader', 'wordDetailsList',
-  'layoutStatus', 'emptyState', 'toast'
+  'layoutStatus', 'emptyState', 'toast', 'canvasWrap'
 ].map((id) => [id, document.querySelector(`#${id}`)]));
+
+let canvasPreviewSize = 1;
+
+function syncCanvasPreviewSize() {
+  const size = Math.max(1, Math.floor(Math.min(
+    elements.canvasWrap.clientWidth,
+    elements.canvasWrap.clientHeight
+  )));
+  if (elements.wordDetailsPanel.hidden || size > canvasPreviewSize) canvasPreviewSize = size;
+  canvas.style.width = `${canvasPreviewSize}px`;
+  canvas.style.height = `${canvasPreviewSize}px`;
+}
+
+const canvasResizeObserver = new ResizeObserver(syncCanvasPreviewSize);
+canvasResizeObserver.observe(elements.canvasWrap);
+requestAnimationFrame(syncCanvasPreviewSize);
 
 const palettes = [
   { name: '鲜果', colors: ['#FF3B30', '#FF8A00', '#FFD60A', '#34C759', '#0A84FF'] },
   { name: '晴日', colors: ['#007AFF', '#32ADE6', '#64D2FF', '#30D158', '#FFD60A'] },
-  { name: '紫霞', colors: ['#372B52', '#7254D8', '#B58CE4', '#E8658A', '#F2A65A'] },
-  { name: '海岸', colors: ['#12355B', '#1C77C3', '#39A9DB', '#40BCD8', '#F4D35E'] },
-  { name: '森林', colors: ['#163832', '#235347', '#8EB69B', '#DAF1DE', '#D4A373'] },
-  { name: '日落', colors: ['#5F0F40', '#9A031E', '#FB8B24', '#E36414', '#0F4C5C'] },
-  { name: '墨彩', colors: ['#171719', '#424047', '#77727D', '#A7A2AC', '#D95D7B'] }
+  { name: '科技', colors: ['#111827', '#2563EB', '#06B6D4', '#8B5CF6', '#22C55E'] },
+  { name: '时尚', colors: ['#18181B', '#7C3AED', '#DB2777', '#E11D48', '#D97706'] },
+  { name: '墨彩', colors: ['#1C1C1C', '#3A3A3A', '#5C5C5C', '#7A7A7A', '#9A9A9A'] }
 ];
 
 const fontPresets = {
@@ -39,7 +53,13 @@ const fontPresets = {
 };
 
 const builtInSvgShapes = {
-  'builtin-weibo': { id: 'builtin-weibo', name: '微博', dataUrl: './assets/weibo.svg' }
+  'builtin-weibo': {
+    id: 'builtin-weibo',
+    name: '微博',
+    dataUrl: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjgwIiBoZWlnaHQ9IjIyNiIgdmlld0JveD0iMCAwIDI4MCAyMjYiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgPHBhdGggZmlsbC1ydWxlPSJldmVub2RkIiBjbGlwLXJ1bGU9ImV2ZW5vZGQiIGQ9Ik0yMzUuNjY5IDQ4Ljc3MTNDMjQxLjIyOSA1Ni43NjQ4IDI0MC42ODIgNjcuOTcyMSAyMzUuNTcxIDgwLjk2MzZDMjMzLjE5OCA4Ni45NzEgMjM2LjMxNCA4Ny44NzY3IDI0MC44MTQgODkuMjUxN0MyNTkuMjE2IDk1LjAwMjcgMjc5LjY3NCAxMDguOTMzIDI3OS42NzQgMTMzLjQyNkMyNzkuNjc0IDE3NC4wMDUgMjIxLjY3MyAyMjUuMTA4IDEzNC40ODUgMjI1LjEwOEM2Ny45NzIxIDIyNS4xMDggMCAxOTIuNTg5IDAgMTM5LjEwNkMwIDExMS4xNTkgMTcuNTYwMiA3OC44MTM4IDQ3Ljc5MzIgNDMuMzk2OUM4OC4xNzMgNy41NzYyMSAxMzUuMjY2IC0xMC45NzUyIDE1Mi45NjkgNi44ODMyNkMxNjAuNzc2IDE0Ljc3MzEgMTYxLjU1MiAyOC40MTM5IDE1Ni41MjggNDQuNjlDMTUzLjkwOSA1Mi44OTA5IDE2NC4xMzggNDguMzc4NSAxNjQuMTM4IDQ4LjM3ODVDMTk2Ljc3NiAzNC41Nzk1IDIyNS4yNTQgMzMuNzU1NiAyMzUuNjY5IDQ4Ljc3MTNaIiBmaWxsPSJibGFjayIvPgo8L3N2Zz4K',
+    viewBox: [280, 226],
+    pathData: 'M235.669 48.7713C241.229 56.7648 240.682 67.9721 235.571 80.9636C233.198 86.971 236.314 87.8767 240.814 89.2517C259.216 95.0027 279.674 108.933 279.674 133.426C279.674 174.005 221.673 225.108 134.485 225.108C67.9721 225.108 0 192.589 0 139.106C0 111.159 17.5602 78.8138 47.7932 43.3969C88.173 7.57621 135.266 -10.9752 152.969 6.88326C160.776 14.7731 161.552 28.4139 156.528 44.69C153.909 52.8909 164.138 48.3785 164.138 48.3785C196.776 34.5795 225.254 33.7556 235.669 48.7713Z'
+  }
 };
 
 const state = {
@@ -110,6 +130,10 @@ function getFontLevels() {
 
 function updateLevelPreview(levels = getFontLevels()) {
   state.currentLevels = levels.map((size) => Math.round(size));
+  const levelCount = state.currentLevels.length;
+  const rowCount = levelCount <= 7 ? 1 : 2;
+  const columnCount = Math.ceil(levelCount / rowCount);
+  elements.fontLevelPreview.style.setProperty('--level-columns', String(columnCount));
   elements.fontLevelPreview.innerHTML = state.currentLevels.map((size, index) =>
     `<input type="number" min="8" max="260" value="${size}" data-level-index="${index}" aria-label="字号档位 ${index + 1}" ${elements.autoFontFit.checked ? 'disabled' : ''} />`
   ).join('');
@@ -242,20 +266,69 @@ function renderSavedShapes() {
   }
 }
 
+function finishSavedShapeActivation(shape) {
+  if (!state.imageMaskStats) throw new Error('SVG mask is empty');
+  state.shape = 'image';
+  state.activeSavedShapeId = shape.id;
+  state.activeRegion = null;
+  state.drawing = false;
+  drawingSession = null;
+  elements.invertRow.hidden = false;
+  document.querySelectorAll('.shape-card').forEach((button) => button.classList.toggle('active', button.dataset.savedShape === shape.id));
+  layoutWords();
+  commitHistory();
+}
+
+function buildVectorShapeMask(shape, invert) {
+  const [sourceWidth, sourceHeight] = shape.viewBox;
+  const maskCanvas = document.createElement('canvas');
+  maskCanvas.width = maskCanvas.height = CANVAS_SIZE;
+  const maskContext = maskCanvas.getContext('2d', { willReadFrequently: true });
+  const scale = Math.min(920 / sourceWidth, 920 / sourceHeight);
+  const width = sourceWidth * scale;
+  const height = sourceHeight * scale;
+  maskContext.save();
+  maskContext.translate((CANVAS_SIZE - width) / 2, (CANVAS_SIZE - height) / 2);
+  maskContext.scale(scale, scale);
+  maskContext.fillStyle = '#000';
+  maskContext.fill(new Path2D(shape.pathData));
+  maskContext.restore();
+
+  const pixels = maskContext.getImageData(0, 0, CANVAS_SIZE, CANVAS_SIZE).data;
+  const result = new Uint8Array(CANVAS_SIZE * CANVAS_SIZE);
+  for (let i = 0; i < result.length; i += 1) {
+    const inside = pixels[i * 4 + 3] > 30;
+    result[i] = invert ? (inside ? 0 : 1) : (inside ? 1 : 0);
+  }
+  return result;
+}
+
 function activateSavedShape(shape) {
+  if (shape.pathData && shape.viewBox) {
+    try {
+      state.maskImage = null;
+      state.imageMask = buildVectorShapeMask(shape, elements.invertMask.checked);
+      state.imageMaskStats = getImageMaskStats(state.imageMask);
+      finishSavedShapeActivation(shape);
+    } catch (error) {
+      console.error('Failed to build built-in vector mask', error);
+      showToast('形状处理失败，请重新尝试');
+    }
+    return;
+  }
+
   const image = new Image();
   image.onload = () => {
-    state.maskImage = image;
-    updateImageMask(image, elements.invertMask.checked);
-    state.shape = 'image';
-    state.activeSavedShapeId = shape.id;
-    state.activeRegion = null;
-    state.drawing = false;
-    elements.invertRow.hidden = false;
-    document.querySelectorAll('.shape-card').forEach((button) => button.classList.toggle('active', button.dataset.savedShape === shape.id));
-    layoutWords();
-    commitHistory();
+    try {
+      state.maskImage = image;
+      updateImageMask(image, elements.invertMask.checked);
+      finishSavedShapeActivation(shape);
+    } catch (error) {
+      console.error('Failed to build saved SVG mask', error);
+      showToast('形状处理失败，请重新尝试');
+    }
   };
+  image.onerror = () => showToast('形状加载失败，请重新尝试');
   image.src = shape.dataUrl;
 }
 
@@ -285,8 +358,8 @@ function getMaskPredicate(region) {
   if (state.shape === 'custom' && state.polygon.length >= 3) {
     return (x, y) => pointInPolygon(x, y, state.polygon);
   }
-  if (state.shape === 'image' && state.maskImage) {
-    const mask = state.imageMask || buildImageMask(state.maskImage, elements.invertMask.checked);
+  if (state.shape === 'image' && state.imageMask) {
+    const mask = state.imageMask;
     return (x, y) => mask[Math.floor(y) * CANVAS_SIZE + Math.floor(x)] === 1;
   }
   if (state.shape === 'circle') {
@@ -856,6 +929,7 @@ function chooseShape(shape) {
   state.shape = shape;
   state.activeSavedShapeId = null;
   state.drawing = false;
+  drawingSession = null;
   canvas.classList.remove('drawing');
   elements.drawingHelp.hidden = true;
   elements.invertRow.hidden = shape !== 'image';
@@ -965,6 +1039,7 @@ const history = {
   lastCommitAt: 0,
   restoring: false
 };
+let drawingSession = null;
 
 function historyObjectId(object) {
   if (!object || (typeof object !== 'object' && typeof object !== 'function')) return null;
@@ -1085,7 +1160,7 @@ function restoreHistorySnapshot(snapshot) {
   renderSavedShapes();
   persistSavedShapes();
   document.querySelectorAll('.shape-card').forEach((button) => {
-    const active = state.activeSavedShapeId
+    const active = state.shape === 'custom' ? false : state.activeSavedShapeId
       ? button.dataset.savedShape === state.activeSavedShapeId
       : button.dataset.shape === state.shape;
     button.classList.toggle('active', active);
@@ -1232,6 +1307,11 @@ elements.wordDetailsToggle.addEventListener('click', () => {
   elements.wordDetailsPanel.hidden = !willOpen;
   elements.wordDetailsToggle.setAttribute('aria-expanded', String(willOpen));
   renderWordDetails();
+  requestAnimationFrame(() => {
+    if (!willOpen) syncCanvasPreviewSize();
+    elements.canvasWrap.scrollLeft = (elements.canvasWrap.scrollWidth - elements.canvasWrap.clientWidth) / 2;
+    elements.canvasWrap.scrollTop = (elements.canvasWrap.scrollHeight - elements.canvasWrap.clientHeight) / 2;
+  });
 });
 
 elements.wordDetailsList.addEventListener('change', (event) => {
@@ -1339,15 +1419,27 @@ elements.addColorButton.addEventListener('click', () => {
 function finishPolygon() {
   if (state.polygon.length < 3) return showToast('至少需要 3 个节点');
   state.drawing = false;
+  drawingSession = null;
   canvas.classList.remove('drawing');
   elements.drawingHelp.hidden = true;
   layoutWords();
   commitHistory();
+  showToast('完成绘图！');
 }
 
 elements.drawShapeButton.addEventListener('click', () => {
+  drawingSession = {
+    snapshot: captureHistorySnapshot(),
+    undo: [...history.undo],
+    redo: [...history.redo],
+    current: history.current,
+    lastGroup: history.lastGroup,
+    lastCommitAt: history.lastCommitAt
+  };
   state.drawing = true;
   state.shape = 'custom';
+  state.activeSavedShapeId = null;
+  state.activeRegion = null;
   state.polygon = [];
   state.placements = [];
   canvas.classList.add('drawing');
@@ -1374,19 +1466,21 @@ canvas.addEventListener('dblclick', (event) => {
   finishPolygon();
 });
 
-elements.undoPolygonButton.addEventListener('click', () => {
-  if (!state.drawing || !state.polygon.length) return;
-  state.polygon.pop();
-  drawCanvas();
+elements.cancelPolygonButton.addEventListener('click', () => {
+  if (!drawingSession) return;
+  const session = drawingSession;
+  drawingSession = null;
+  history.undo = session.undo;
+  history.redo = session.redo;
+  history.current = session.current;
+  history.lastGroup = session.lastGroup;
+  history.lastCommitAt = session.lastCommitAt;
+  restoreHistorySnapshot(session.snapshot);
+  updateHistoryButtons();
+  showToast('已取消绘图');
 });
 
-elements.resetPolygonButton.addEventListener('click', () => {
-  if (!state.drawing) return;
-  state.polygon = [];
-  drawCanvas();
-});
-
-elements.closePolygonButton.addEventListener('click', finishPolygon);
+elements.finishPolygonButton.addEventListener('click', finishPolygon);
 
 elements.imageUpload.addEventListener('change', () => {
   const file = elements.imageUpload.files?.[0];
@@ -1427,7 +1521,13 @@ elements.svgShapeUpload.addEventListener('change', () => {
 });
 
 elements.invertMask.addEventListener('change', () => {
-  if (state.maskImage) updateImageMask(state.maskImage, elements.invertMask.checked);
+  const builtInShape = builtInSvgShapes[state.activeSavedShapeId];
+  if (builtInShape?.pathData) {
+    state.imageMask = buildVectorShapeMask(builtInShape, elements.invertMask.checked);
+    state.imageMaskStats = getImageMaskStats(state.imageMask);
+  } else if (state.maskImage) {
+    updateImageMask(state.maskImage, elements.invertMask.checked);
+  }
   scheduleLayout();
 });
 elements.showShapeLayer.addEventListener('change', () => {
@@ -1522,6 +1622,11 @@ elements.exportPngButton.addEventListener('click', () => {
 elements.exportSvgButton.addEventListener('click', () => download(buildSvg(), 'pilepilepile.svg', 'image/svg+xml;charset=utf-8'));
 elements.copySvgButton.addEventListener('click', async () => {
   try {
+    if (window.webkit?.messageHandlers?.clipboard) {
+      window.webkit.messageHandlers.clipboard.postMessage(buildSvg());
+      showToast('SVG 已复制到剪贴板');
+      return;
+    }
     await navigator.clipboard.writeText(buildSvg());
     showToast('SVG 已复制到剪贴板');
   } catch {
@@ -1545,22 +1650,40 @@ elements.fontFamily.addEventListener('change', () => {
 elements.minFontSize.addEventListener('input', () => { state.manualLevels = null; updateLevelPreview(); scheduleLayout(); });
 elements.fontLevelGap.addEventListener('input', () => { state.manualLevels = null; updateLevelPreview(); scheduleLayout(); });
 elements.fontLevelCount.addEventListener('input', () => { state.manualLevels = null; updateLevelPreview(); scheduleLayout(); });
-elements.fontLevelPreview.addEventListener('input', (event) => {
-  const input = event.target.closest('[data-level-index]');
+function commitFontLevelInput(input) {
   if (!input || elements.autoFontFit.checked) return;
   const index = Number(input.dataset.levelIndex);
+  const fallback = state.currentLevels[index] ?? 8;
+  const parsed = input.value.trim() === '' ? fallback : Number(input.value);
+  const value = Number.isFinite(parsed) ? clamp(Math.round(parsed), 8, 260) : fallback;
+  input.value = String(value);
   if (!state.manualLevels) state.manualLevels = [...state.currentLevels];
-  state.manualLevels[index] = clamp(Number(input.value) || 8, 8, 260);
+  if (state.manualLevels[index] === value) return;
+  state.manualLevels[index] = value;
   state.currentLevels = [...state.manualLevels];
-  scheduleLayout();
+  layoutWords();
+  commitHistory();
+}
+
+elements.fontLevelPreview.addEventListener('change', (event) => {
+  const input = event.target.closest('[data-level-index]');
+  commitFontLevelInput(input);
+});
+elements.fontLevelPreview.addEventListener('keydown', (event) => {
+  if (event.key !== 'Enter') return;
+  const input = event.target.closest('[data-level-index]');
+  if (!input) return;
+  event.preventDefault();
+  commitFontLevelInput(input);
+  input.blur();
 });
 elements.autoFontFit.addEventListener('change', () => {
-  if (!elements.autoFontFit.checked) state.manualLevels = [...state.currentLevels];
+  const preservedLevels = [...state.currentLevels];
+  if (!elements.autoFontFit.checked) state.manualLevels = preservedLevels;
   else state.manualLevels = null;
   elements.minFontSize.disabled = elements.autoFontFit.checked;
   elements.fontLevelGap.disabled = elements.autoFontFit.checked;
-  updateLevelPreview();
-  scheduleLayout();
+  updateLevelPreview(preservedLevels);
 });
 elements.wordPadding.addEventListener('input', () => { elements.paddingOutput.value = `${elements.wordPadding.value} px`; scheduleLayout(); });
 elements.fillStrength.addEventListener('input', () => { elements.fillStrengthOutput.value = `${elements.fillStrength.value}%`; scheduleLayout(); });
